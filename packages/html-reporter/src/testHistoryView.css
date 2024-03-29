@@ -14,7 +14,7 @@
 }
 
 .test-history-nibs{
-  width: 3px;
+  width: 5px;
   cursor: pointer;
   position: relative;
 }
@@ -67,6 +67,7 @@
   margin-left: -7px;
   cursor: pointer;
   position: absolute;
+  height: 16px;
 }
 
 
@@ -79,7 +80,6 @@
 }
 .test-history-comments-timeline{
   position: relative;
-  height: 16px;
   margin-bottom: 0.25rem;
 }
 

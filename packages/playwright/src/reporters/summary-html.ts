@@ -64,7 +64,7 @@ class SummaryHtmlReporter extends EmptyReporter {
   private _outputFolder!: string;
   private _attachmentsBaseURL!: string;
   private _open: string | undefined;
-  private _buildResult: { ok: boolean, singleTestId: string | undefined } | undefined;
+  private _buildResult: { ok: boolean, singleTestId: string | undefined, htmlReport: HTMLReport } | undefined;
   private _topLevelErrors: TestError[] = [];
 
   constructor(options: SummaryHtmlReporterOptions) {
@@ -126,8 +126,18 @@ class SummaryHtmlReporter extends EmptyReporter {
     const builder = new HtmlBuilder(this.config, this._outputFolder, this._attachmentsBaseURL);
     this._buildResult = await builder.build(this.config.metadata, projectSuites, result, this._topLevelErrors);
 
-    this.suite.allTests().forEach(t=>{
-      data.push({title: t.title, testId: t.id, file: builder._relativeLocation(t.location)!.file, run: process.env.RUN_NAME, environment: process.env.RUN_ENVIRONMENT, outcome: t.outcome(), projectName: t.parent.project()?.name, startTime: result.startTime})
+    const tests = this._buildResult.htmlReport.files.reduce<{test:TestCaseSummary, file:TestFileSummary}[]>((t,a)=>[...t, ...a.tests.map((t)=>({test:t,file:a}))], [])
+
+    tests.forEach(({test, file})=>{
+      const path = file.fileName.split(/\/|\\/)
+      const fileName = path[path.length - 1]
+      data.push({title: test.title,
+        testId: test.testId,
+        file: fileName,
+        run: process.env.RUN_NAME, environment: process.env.RUN_ENVIRONMENT,
+        outcome: test.outcome,
+        projectName: test.projectName,
+        startTime: result.startTime})
     })
     console.log(JSON.stringify({ data }))
     console.log(await (await fetch(`http://api/api/history/bulk`, {
@@ -192,7 +202,7 @@ class HtmlBuilder {
     this._attachmentsBaseURL = attachmentsBaseURL;
   }
 
-  async build(metadata: Metadata, projectSuites: Suite[], result: FullResult, topLevelErrors: TestError[]): Promise<{ ok: boolean, singleTestId: string | undefined }> {
+  async build(metadata: Metadata, projectSuites: Suite[], result: FullResult, topLevelErrors: TestError[]): Promise<{ ok: boolean, singleTestId: string | undefined, htmlReport: HTMLReport }> {
     const data = new Map<string, { testFile: TestFile, testFileSummary: TestFileSummary }>();
     for (const projectSuite of projectSuites) {
       const testDir = projectSuite.project()!.testDir;
@@ -305,7 +315,7 @@ class HtmlBuilder {
       singleTestId = testFile.tests[0].testId;
     }
 
-    return { ok, singleTestId };
+    return { ok, singleTestId, htmlReport };
   }
 
   private _addDataFile(fileName: string, data: any) {

@@ -68,17 +68,18 @@ export const TestHistoryView: React.FC<{
     const testOrder = tests
       .sort((a,b)=>a.projectName.localeCompare(b.projectName))
       .map((test)=>filteredHistory?.find(h=>h.projectName === test.projectName))
-    return filteredHistory[0]?.outcomeHistory.map((x,i)=>{
+    return filteredHistory[0]?.outcomeHistory.map((x)=>{
+      const targetRun = x.run
       return {
         run: x.run,
         testName: testOrder[0]?.testName,
         projectTestIds: testOrder.reduce((t, h)=>({
           ...t,
-          [h?.projectName??'']: h?.outcomeHistory[i].testId
+          [h?.projectName??'']: h?.outcomeHistory.find(h=>h.run===targetRun)?.testId??''
         }), {}),
         runOutcomes: testOrder.map(h=>({
           projectName: h?.projectName,
-          historyOutcome: h?.outcomeHistory[i]
+          historyOutcome: h?.outcomeHistory.find(h=>h.run===targetRun)
         }))
       }
     })||[]
@@ -87,7 +88,6 @@ export const TestHistoryView: React.FC<{
   // @ts-ignore
   useEventListener('showComment', ({testName,runName})=>{
     if(testName === tests[0].title){
-      console.log(testName,runName)
       const run = outcomeByRun.find(r=>r.run===runName)
       if(run){
         handleSelect(
@@ -106,12 +106,13 @@ export const TestHistoryView: React.FC<{
           .sort((a,b)=>a.projectName.localeCompare(b.projectName))
           .map((test)=>
           <div key={test.testId}>
-            <Link href={`#?testId=${test.testId}`} className="test-history-label">{test.projectName}
-              <span className="test-file-test-status-icon">
-                {statusIcon(test.outcome)}
-              </span>
-              <span data-testid='test-duration' className='test-duration'>{msToString(test.duration)}</span>
+            <Link href={`#?testId=${test.testId}`} className="test-history-label" target='_blank'>
+              {test.projectName}
             </Link>
+            <span className="test-file-test-status-icon">
+              {statusIcon(test.outcome)}
+            </span>
+            <span data-testid='test-duration' className='test-duration'>{msToString(test.duration)}</span>
           </div>
         )}
       </div>
@@ -135,7 +136,7 @@ export const TestHistoryView: React.FC<{
             return comment && testName && <div
               onClick={()=>handleSelect(testName, projectTestIds, run)}
               className='test-history-comment'
-              style={{left: `${3*i}px`}}>
+              style={{left: `${5*i}px`}}>
               {resolutionIcon(comment?.status)}
             </div>
           })}

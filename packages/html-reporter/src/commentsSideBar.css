@@ -5,6 +5,7 @@
   border-top-left-radius: 6px;
   border-top-right-radius: 6px;
   max-width: 450px;
+  min-width: 225px;
 }
 .comment-pane-content{
   position: sticky;

@@ -45,8 +45,9 @@ export const Link: React.FunctionComponent<{
   className?: string,
   title?: string,
   children: any,
-}> = ({ href, className, children, title }) => {
-  return <a style={{ textDecoration: 'none', color: 'var(--color-fg-default)' }} className={`${className || ''}`} href={href} title={title}>{children}</a>;
+  target?: string
+}> = ({ href, className, children, title, target }) => {
+  return <a style={{ textDecoration: 'none', color: 'var(--color-fg-default)' }} className={`${className || ''}`} href={href} title={title} target={target}>{children}</a>;
 };
 
 export const ProjectFilters: React.FunctionComponent<{

@@ -29,7 +29,7 @@ import { TestCaseView } from './testCaseView';
 import { TestFilesView } from './testFilesView';
 import './theme.css';
 import { CommentsSideBar } from './commentsSideBar';
-import { generateURL, useEventListener } from './uiUtils';
+import { eventDispatch, generateURL, useEventListener } from './uiUtils';
 
 declare global {
   interface Window {
@@ -86,6 +86,14 @@ const getComments = ()=>{
       language: 'en'
     };
   }, [htmlReport])
+  React.useEffect(()=>{
+    const inter = setInterval(()=>{
+      eventDispatch('addComment')
+    }, 180000)
+    return ()=>{
+      clearInterval(inter)
+    }
+  },[])
 
   useEventListener('addComment', getComments, [htmlReport])
   useEventListener('resolveComment', getComments, [htmlReport])

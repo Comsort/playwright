@@ -82,7 +82,7 @@ export const TestPopup: React.FC<{
 
   return <>
     {selectedValue && <div ref={popupRef} className='test-popup-info'>
-      <Link href={`../${selectedValue.run}/index.html#?testId=${Object.values(selectedValue.projectTestIds)[0]}`} title={[selectedValue.run, selectedValue.testName].join(' › ')} className='test-popup-info-title'>
+      <Link href={`../${selectedValue.run}/index.html#?testId=${Object.values(selectedValue.projectTestIds)[0]}`} title={[selectedValue.run, selectedValue.testName].join(' › ')} className='test-popup-info-title' target='_blank'>
         {selectedValue.run}
       </Link>
       <div className='test-popup-info-status-lines'>
@@ -91,11 +91,15 @@ export const TestPopup: React.FC<{
           const outcome = outcomeHistory.find(({run})=>run===selectedValue.run)?.outcome
           return outcome ?<React.Fragment key={i}>
             <div>
-              <Link href={`../${selectedValue.run}/index.html#?testId=${selectedValue.projectTestIds[projectName]}`}>
+              <Link href={`../${selectedValue.run}/index.html#?testId=${selectedValue.projectTestIds[projectName]}`} target='_blank'>
                 {projectName}:
               </Link>
             </div>
-            <div>{outcome} {statusIcon(outcome)}</div></React.Fragment>:null
+            <div>
+              <Link href={`../${selectedValue.run}/index.html#?testId=${selectedValue.projectTestIds[projectName]}`} target='_blank'>
+                {outcome} {statusIcon(outcome)}
+              </Link>
+            </div></React.Fragment>:null
         })}
       </div>
       {comments.length > 0 && <button onClick={()=>setShowAddComment(true)} style={{marginBottom: '0.5rem'}}>Add Comment</button>}
