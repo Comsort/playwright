@@ -39,12 +39,12 @@ export const TestFilesView: React.FC<{
       const tests = file.tests.filter(t => filter.matches(t));
       visibleTests += tests.length;
       if (tests.length)
-        result.push({ file, defaultExpanded: visibleTests < 200 });
+        result.push({ file, defaultExpanded: true });
     }
     return result;
   }, [report, filter]);
   return <>
-    <ProjectFilters projectNames={report?.projectNames||[]} />
+    <ProjectFilters projectNames={report?.projectNames||[]} report={report} />
     <div className='mt-2 mx-1' style={{ display: 'flex', flexFlow:"row wrap" }}>
       {projectNames.length === 1 && !!projectNames[0] && <div data-testid="project-name" style={{ color: 'var(--color-fg-subtle)' }}>Project: {projectNames[0]}</div>}
       {!filter.empty() && <div data-testid="filtered-tests-count" style={{ color: 'var(--color-fg-subtle)', padding: '0 10px' }}>Filtered: {filteredStats.total} {!!filteredStats.total && ('(' + msToString(filteredStats.duration) + ')')}</div>}

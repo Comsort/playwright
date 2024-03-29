@@ -41,10 +41,7 @@ export const HeaderView: React.FC<React.PropsWithChildren<{
   }, [setFilterText]);
 
   return (<>
-    <div className='pt-3'>
-      <div className='header-view-status-container ml-2 pl-2 d-flex'>
-        <StatsNavView stats={stats}></StatsNavView>
-      </div>
+    <div className='pt-3' style={{display: 'flex', flexWrap: 'wrap'}}>
       <form className='subnav-search' onSubmit={
         event => {
           event.preventDefault();
@@ -57,6 +54,9 @@ export const HeaderView: React.FC<React.PropsWithChildren<{
           setFilterText(e.target.value);
         }}></input>
       </form>
+      <div className='header-view-status-container ml-2 pl-2 d-flex'>
+        <StatsNavView stats={stats}></StatsNavView>
+      </div>
     </div>
   </>);
 };

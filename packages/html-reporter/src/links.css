@@ -110,3 +110,15 @@
   right: 5px;
   top: 5px;
 }
+
+.project-stats{
+  display:grid;
+  grid-template-columns: repeat(6, 1fr);
+  text-align: center;
+  background-color: var(--color-canvas-subtle);
+  border: 1px solid var(--color-border-default);
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  align-items: center;
+  gap: 4px;
+}

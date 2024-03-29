@@ -15,12 +15,12 @@
 */
 
 .header-view-status-container {
-  float: right;
+  /* float: right; */
 }
 
 @media only screen and (max-width: 600px) {
   .header-view-status-container {
-    float: none;
+    /* float: none; */
     margin: 0 0 10px 0 !important;
     overflow: hidden;
   }

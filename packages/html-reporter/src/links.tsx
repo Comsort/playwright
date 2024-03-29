@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import type { TestAttachment } from './types';
+import type { HTMLReport, TestAttachment, TestCaseSummary } from './types';
 import * as React from 'react';
 import * as icons from './icons';
 import { TreeItem } from './treeItem';
@@ -52,16 +52,54 @@ export const Link: React.FunctionComponent<{
 
 export const ProjectFilters: React.FunctionComponent<{
   projectNames: string[],
-}> = ({ projectNames }) => {
-  return <div style={{display:'flex', flexFlow:"row wrap"}}>
+  report?: HTMLReport
+}> = ({ projectNames, report }) => {
+
+  const projectStats = React.useMemo(()=>{
+    const stats:any = {}
+    if(report){
+      Array.from(new Set(projectNames)).forEach(name=>{stats[name]={total:0, passed:0, failed:0, flaky:0, skipped: 0}})
+      const add = (project:string, outcome:string) => {
+        stats[project].total++;
+        switch (outcome) {
+          case 'failed':
+          case 'unexpected':
+          case 'timedOut':
+            return stats[project].failed++
+          case 'passed':
+          case 'expected':
+            return stats[project].passed++
+          case 'flaky':
+            return stats[project].flaky++
+          case 'skipped':
+          case 'interrupted':
+            return stats[project].skipped++
+        }
+      }
+
+      report.files.reduce<TestCaseSummary[]>((t,a)=>[...t, ...a.tests],[]).forEach((t)=>add(t.projectName, t.outcome));
+    }
+    return stats
+  },[report])
+
+  return <div className='project-stats'>
+    <div></div><div style={{fontWeight:600}}>Total</div><div style={{fontWeight:600}}>Passed</div><div style={{fontWeight:600}}>Failed</div><div style={{fontWeight:600}}>Flaky</div><div style={{fontWeight:600}}>Skipped</div>
     {Array.from(new Set(projectNames)).sort().map((projectName,i)=>{
+
       const encoded = encodeURIComponent(projectName);
       const value = projectName === encoded ? projectName : `"${encoded.replace(/%22/g, '%5C%22')}"`;
-      return <Link href={`#?q=p:${value}`}>
-        <span className={'label label-color-' + (i % 6)} style={{ margin: '6px 0 0 6px' }}>
-          {projectName}
-        </span>
-      </Link>;
+      return <React.Fragment key={i}>
+        <Link href={`#?q=p:${value}`}>
+          <span className={'label label-color-' + (i % 6)}>
+            {projectName}
+          </span>
+        </Link>
+        <div>{projectStats[projectName].total??0}</div>
+        <div>{projectStats[projectName].passed??0}</div>
+        <div>{projectStats[projectName].failed??0}</div>
+        <div>{projectStats[projectName].flaky??0}</div>
+        <div>{projectStats[projectName].skipped??0}</div>
+      </React.Fragment>;
     })}
   </div>
 };

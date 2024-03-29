@@ -113,7 +113,7 @@ export const CommentCard: React.FunctionComponent<{
         <button onClick={toggleEdit} disabled={submitting} style={{marginLeft: "auto"}}>Edit</button>
         {showContext && <button onClick={()=>{
           eventDispatch('showComment', {testName: comment.testName, runName: comment.runName})
-        }}>Reply</button>}
+        }}>View</button>}
       </div>
     }
   </div>
