@@ -22,6 +22,7 @@ import './testFileView.css';
 import { msToString } from './uiUtils';
 import { AutoChip } from './chip';
 import { TestErrorView } from './testErrorView';
+import { ProjectFilters } from './links';
 
 export const TestFilesView: React.FC<{
   report?: HTMLReport,
@@ -43,7 +44,8 @@ export const TestFilesView: React.FC<{
     return result;
   }, [report, filter]);
   return <>
-    <div className='mt-2 mx-1' style={{ display: 'flex' }}>
+    <ProjectFilters projectNames={report?.projectNames||[]} />
+    <div className='mt-2 mx-1' style={{ display: 'flex', flexFlow:"row wrap" }}>
       {projectNames.length === 1 && !!projectNames[0] && <div data-testid="project-name" style={{ color: 'var(--color-fg-subtle)' }}>Project: {projectNames[0]}</div>}
       {!filter.empty() && <div data-testid="filtered-tests-count" style={{ color: 'var(--color-fg-subtle)', padding: '0 10px' }}>Filtered: {filteredStats.total} {!!filteredStats.total && ('(' + msToString(filteredStats.duration) + ')')}</div>}
       <div style={{ flex: 'auto' }}></div>

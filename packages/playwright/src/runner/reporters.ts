@@ -21,6 +21,7 @@ import DotReporter from '../reporters/dot';
 import EmptyReporter from '../reporters/empty';
 import GitHubReporter from '../reporters/github';
 import HtmlReporter from '../reporters/html';
+import SummaryHtmlReporter from '../reporters/summary-html';
 import JSONReporter from '../reporters/json';
 import JUnitReporter from '../reporters/junit';
 import LineReporter from '../reporters/line';
@@ -44,6 +45,7 @@ export async function createReporters(config: FullConfigInternal, mode: 'list' |
     junit: JUnitReporter,
     null: EmptyReporter,
     html: HtmlReporter,
+    summaryHtml: SummaryHtmlReporter,
     markdown: MarkdownReporter,
   };
   const reporters: ReporterV2[] = [];

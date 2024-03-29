@@ -20,6 +20,7 @@
     },
     "./package.json": "./package.json",
     "./lib/common/configLoader": "./lib/common/configLoader.js",
+    "./lib/reporters/merge": "./lib/reporters/merge.js",
     "./lib/fsWatcher": "./lib/fsWatcher.js",
     "./lib/program": "./lib/program.js",
     "./lib/transform/babelBundle": "./lib/transform/babelBundle.js",

@@ -49,6 +49,22 @@ export const Link: React.FunctionComponent<{
   return <a style={{ textDecoration: 'none', color: 'var(--color-fg-default)' }} className={`${className || ''}`} href={href} title={title}>{children}</a>;
 };
 
+export const ProjectFilters: React.FunctionComponent<{
+  projectNames: string[],
+}> = ({ projectNames }) => {
+  return <div style={{display:'flex', flexFlow:"row wrap"}}>
+    {Array.from(new Set(projectNames)).sort().map((projectName,i)=>{
+      const encoded = encodeURIComponent(projectName);
+      const value = projectName === encoded ? projectName : `"${encoded.replace(/%22/g, '%5C%22')}"`;
+      return <Link href={`#?q=p:${value}`}>
+        <span className={'label label-color-' + (i % 6)} style={{ margin: '6px 0 0 6px' }}>
+          {projectName}
+        </span>
+      </Link>;
+    })}
+  </div>
+};
+
 export const ProjectLink: React.FunctionComponent<{
   projectNames: string[],
   projectName: string,

@@ -44,6 +44,7 @@ export type HTMLReport = {
   startTime: number;
   duration: number;
   errors: string[];  // Top-level errors that are not attributed to any test.
+  env?: any
 };
 
 export type TestFile = {
@@ -111,3 +112,19 @@ export type TestStep = {
   steps: TestStep[];
   count: number;
 };
+export type Comment = {
+  id: number,
+  user: string,
+  createDate: Date,
+  body: string,
+  status: 'resolved' | 'unresolved',
+  replyCount: number,
+  testName: string,
+  runName: string
+}
+export type CommentsStatus = {
+  testName: string,
+  runName: string,
+  status: 'resolved' | 'unresolved'
+
+}

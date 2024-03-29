@@ -16,7 +16,7 @@
 
 import type { HTMLReport, TestCaseSummary, TestFileSummary } from './types';
 import * as React from 'react';
-import { msToString } from './uiUtils';
+import { generateURL, msToString } from './uiUtils';
 import { Chip } from './chip';
 import type { Filter } from './filter';
 import { generateTraceUrl, Link, navigate, ProjectLink } from './links';
@@ -24,51 +24,7 @@ import { statusIcon } from './statusIcon';
 import './testFileView.css';
 import { video, image, trace } from './icons';
 import { hashStringToInt } from './labelUtils';
-
-export const TestFileView: React.FC<React.PropsWithChildren<{
-  report: HTMLReport;
-  file: TestFileSummary;
-  isFileExpanded: (fileId: string) => boolean;
-  setFileExpanded: (fileId: string, expanded: boolean) => void;
-  filter: Filter;
-}>> = ({ file, report, isFileExpanded, setFileExpanded, filter }) => {
-  return <Chip
-    expanded={isFileExpanded(file.fileId)}
-    noInsets={true}
-    setExpanded={(expanded => setFileExpanded(file.fileId, expanded))}
-    header={<span>
-      {file.fileName}
-    </span>}>
-    {file.tests.filter(t => filter.matches(t)).map(test =>
-      <div key={`test-${test.testId}`} className={'test-file-test test-file-test-outcome-' + test.outcome}>
-        <div className='hbox' style={{ alignItems: 'flex-start' }}>
-          <div className="hbox">
-            <span className="test-file-test-status-icon">
-              {statusIcon(test.outcome)}
-            </span>
-            <span>
-              <Link href={`#?testId=${test.testId}`} title={[...test.path, test.title].join(' › ')}>
-                <span className='test-file-title'>{[...test.path, test.title].join(' › ')}</span>
-              </Link>
-              {report.projectNames.length > 1 && !!test.projectName &&
-              <ProjectLink projectNames={report.projectNames} projectName={test.projectName} />}
-              <LabelsClickView labels={test.tags} />
-            </span>
-          </div>
-          <span data-testid='test-duration' style={{ minWidth: '50px', textAlign: 'right' }}>{msToString(test.duration)}</span>
-        </div>
-        <div className='test-file-details-row'>
-          <Link href={`#?testId=${test.testId}`} title={[...test.path, test.title].join(' › ')} className='test-file-path-link'>
-            <span className='test-file-path'>{test.location.file}:{test.location.line}</span>
-          </Link>
-          {imageDiffBadge(test)}
-          {videoBadge(test)}
-          {traceBadge(test)}
-        </div>
-      </div>
-    )}
-  </Chip>;
-};
+import { TestHistoryView } from './testHistoryView';
 
 function imageDiffBadge(test: TestCaseSummary): JSX.Element | undefined {
   const resultWithImageDiff = test.results.find(result => result.attachments.some(attachment => {
@@ -86,6 +42,63 @@ function traceBadge(test: TestCaseSummary): JSX.Element | undefined {
   const firstTraces = test.results.map(result => result.attachments.filter(attachment => attachment.name === 'trace')).filter(traces => traces.length > 0)[0];
   return firstTraces ? <Link href={generateTraceUrl(firstTraces)} title='View trace' className='test-file-badge'>{trace()}</Link> : undefined;
 }
+
+export const TestFileView: React.FC<React.PropsWithChildren<{
+  report: HTMLReport;
+  file: TestFileSummary;
+  isFileExpanded: (fileId: string) => boolean;
+  setFileExpanded: (fileId: string, expanded: boolean) => void;
+  filter: Filter;
+}>> = ({ file, report, isFileExpanded, setFileExpanded, filter }) => {
+
+  const [history, setHistory] = React.useState(null)
+  React.useEffect(()=>{
+    fetch(generateURL(`${report.env.API_BASE}/api/history`, {
+      run: report.env.RUN_NAME, environment: report.env.RUN_ENVIRONMENT, file: file.fileName
+    }), {method: 'GET'})
+    .then((res)=>res.json())
+    .then(({results})=>setHistory(results||[]))
+    .catch(console.error)
+  }, [])
+
+  const testGroups = React.useMemo(()=>
+    file.tests
+      .filter(t => filter.matches(t))
+      .reduce((t: Map<string, TestCaseSummary[]>,a:TestCaseSummary)=>{
+        const testName = [...a.path, a.title].join(' › ')
+        if(!t.get(testName)) t.set(testName, []);
+        t.get(testName)?.push(a);
+        return t;
+      }, new Map<string, TestCaseSummary[]>()),
+    [filter, file])
+  return <Chip
+    expanded={isFileExpanded(file.fileId)}
+    noInsets={true}
+    setExpanded={(expanded => setFileExpanded(file.fileId, expanded))}
+    header={<span>
+      {file.fileName}
+    </span>}>
+    {Array.from(testGroups.values()).map((tests:TestCaseSummary[], i) =>
+      <div key={`test-${tests[0].testId}`} className={'test-file-test'}>{/*test-file-test-outcome-' + test.outcome*/}
+        <div className='test-file-test-title'>
+          <span className='test-file-title'>{[...tests[0].path, tests[0].title].join(' › ')}</span>
+          <LabelsClickView labels={tests[0].tags} />
+        </div>
+        <div className='test-file-history-section'>
+            <TestHistoryView tests={tests} history={history} />
+        </div>
+        {tests.map((test)=>
+          <div key={test.testId}>
+            {imageDiffBadge(test)}
+            {videoBadge(test)}
+            {traceBadge(test)}
+          </div>
+        )}
+      </div>
+    )}
+  </Chip>;
+};
+
 
 const LabelsClickView: React.FC<React.PropsWithChildren<{
   labels: string[],

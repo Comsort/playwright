@@ -13,12 +13,13 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 */
-
+.test-file-test-title{
+  margin-bottom: 0.25rem;
+  font-size: 1.125rem;
+}
 .test-file-test {
-  line-height: 32px;
   align-items: center;
   padding: 2px 10px;
-  overflow: hidden;
   text-overflow: ellipsis;
 }
 
@@ -29,6 +30,7 @@
 .test-file-title {
   font-weight: 600;
   font-size: 16px;
+  word-break: break-all;
 }
 
 .test-file-details-row {
@@ -40,7 +42,10 @@
   display: flex;
   align-items: center;
 }
-
+.test-file-history-section {
+  display: flex;
+  flex-flow: column;
+}
 .test-file-path {
   text-overflow: ellipsis;
   overflow: hidden;

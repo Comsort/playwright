@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import type { FilteredStats, TestCase, TestFile, TestFileSummary } from './types';
+import type { CommentsStatus, FilteredStats, HTMLReport, TestCase, TestFile, TestFileSummary } from './types';
 import * as React from 'react';
 import './colors.css';
 import './common.css';
@@ -28,6 +28,8 @@ import { MetadataView } from './metadataView';
 import { TestCaseView } from './testCaseView';
 import { TestFilesView } from './testFilesView';
 import './theme.css';
+import { CommentsSideBar } from './commentsSideBar';
+import { generateURL, useEventListener } from './uiUtils';
 
 declare global {
   interface Window {
@@ -38,6 +40,8 @@ declare global {
 // These are extracted to preserve the function identity between renders to avoid re-triggering effects.
 const testFilesRoutePredicate = (params: URLSearchParams) => !params.has('testId');
 const testCaseRoutePredicate = (params: URLSearchParams) => params.has('testId');
+export const CommentsStatusContext = React.createContext<CommentsStatus[]>([]);
+export const ReportContext = React.createContext<HTMLReport|null>(null);
 
 export const ReportView: React.FC<{
   report: LoadedReport | undefined,
@@ -45,29 +49,71 @@ export const ReportView: React.FC<{
   const searchParams = new URLSearchParams(window.location.hash.slice(1));
   const [expandedFiles, setExpandedFiles] = React.useState<Map<string, boolean>>(new Map());
   const [filterText, setFilterText] = React.useState(searchParams.get('q') || '');
+  const htmlReport = report?.json()
 
   const filter = React.useMemo(() => Filter.parse(filterText), [filterText]);
-  const filteredStats = React.useMemo(() => computeStats(report?.json().files || [], filter), [report, filter]);
+  const filteredStats = React.useMemo(() => computeStats(htmlReport?.files || [], filter), [report, filter]);
+  const [comments, setComments] = React.useState<CommentsStatus[]>([])
+const getComments = ()=>{
+  if(htmlReport){
+    fetch(generateURL(`${htmlReport.env.API_BASE}/api/comment/run-comments`, {
+      environment: htmlReport.env.RUN_ENVIRONMENT
+    }), {method: 'GET'})
+    .then((res)=>res.json())
+    .then(({results})=>setComments(results||[]))
+    .catch(console.error)
+  }
+}
+  React.useEffect(()=>{
+    getComments()
+    // @ts-ignore
+    ClassicEditor.defaultConfig = {
+      toolbar: {
+        items: [
+          'undo',
+          'redo',
+          '|',
+          'bold',
+          'italic',
+          '|',
+          'link',
+          'bulletedList',
+          'numberedList',
+          'blockQuote',
+          'Indent',
+        ]
+      },
+      language: 'en'
+    };
+  }, [htmlReport])
 
-  return <div className='htmlreport vbox px-4 pb-4'>
-    <main>
-      {report?.json() && <HeaderView stats={report.json().stats} filterText={filterText} setFilterText={setFilterText}></HeaderView>}
-      {report?.json().metadata && <MetadataView {...report?.json().metadata as Metainfo} />}
-      <Route predicate={testFilesRoutePredicate}>
-        <TestFilesView
-          report={report?.json()}
-          filter={filter}
-          expandedFiles={expandedFiles}
-          setExpandedFiles={setExpandedFiles}
-          projectNames={report?.json().projectNames || []}
-          filteredStats={filteredStats}
-        />
-      </Route>
-      <Route predicate={testCaseRoutePredicate}>
-        {!!report && <TestCaseViewLoader report={report}></TestCaseViewLoader>}
-      </Route>
-    </main>
-  </div>;
+  useEventListener('addComment', getComments, [htmlReport])
+  useEventListener('resolveComment', getComments, [htmlReport])
+
+  return <div className='htmlreport pb-4'>
+    <ReportContext.Provider value={htmlReport||null}>
+      <CommentsStatusContext.Provider value={comments}>
+        <main>
+          {htmlReport && <HeaderView stats={htmlReport.stats} filterText={filterText} setFilterText={setFilterText}></HeaderView>}
+          {htmlReport?.metadata && <MetadataView {...htmlReport?.metadata as Metainfo} />}
+          <Route predicate={testFilesRoutePredicate}>
+            <TestFilesView
+              report={htmlReport}
+              filter={filter}
+              expandedFiles={expandedFiles}
+              setExpandedFiles={setExpandedFiles}
+              projectNames={htmlReport?.projectNames || []}
+              filteredStats={filteredStats}
+            />
+          </Route>
+          <Route predicate={testCaseRoutePredicate}>
+            {!!report && <TestCaseViewLoader report={report}></TestCaseViewLoader>}
+          </Route>
+        </main>
+        <CommentsSideBar report={htmlReport} />
+      </CommentsStatusContext.Provider>
+    </ReportContext.Provider>
+  </div>;ReportContext
 };
 
 const TestCaseViewLoader: React.FC<{

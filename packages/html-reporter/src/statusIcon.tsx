@@ -32,6 +32,15 @@ export function statusIcon(status: 'failed' | 'timedOut' | 'skipped' | 'passed' 
       return icons.warning();
     case 'skipped':
     case 'interrupted':
-      return icons.blank();
+      return icons.skip();
+  }
+}
+
+export function resolutionIcon(status: 'resolved' | 'unresolved'): JSX.Element {
+  switch (status) {
+    case 'resolved':
+      return icons.check();
+    case 'unresolved':
+      return icons.warning();
   }
 }
