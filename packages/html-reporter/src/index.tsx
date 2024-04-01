@@ -46,9 +46,11 @@ class ZipReport implements LoadedReport {
   private _json!: HTMLReport;
 
   async load() {
-    const zipReader = new zipjs.ZipReader(new zipjs.Data64URIReader((window as any).playwrightReportBase64), { useWebWorkers: false });
-    for (const entry of await zipReader.getEntries())
+    const res = await fetch('./report.zip')
+    const zipReader = new zipjs.ZipReader(new zipjs.BlobReader(await res.blob()), { useWebWorkers: false })
+    for (const entry of await zipReader.getEntries()){
       this._entries.set(entry.filename, entry);
+    }
     this._json = await this.entry('report.json') as HTMLReport;
   }
 
@@ -58,6 +60,7 @@ class ZipReport implements LoadedReport {
 
   async entry(name: string): Promise<Object> {
     const reportEntry = this._entries.get(name);
+
     const writer = new zipjs.TextWriter() as zip.TextWriter;
     await reportEntry!.getData!(writer);
     return JSON.parse(await writer.getData());

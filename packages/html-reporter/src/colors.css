@@ -21,6 +21,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE. */
 
 :root {
+  --color-canvas-default-background: #fff;
   --color-canvas-default-transparent: rgba(255,255,255,0);
   --color-marketing-icon-primary: #218bff;
   --color-marketing-icon-secondary: #54aeff;
@@ -455,6 +456,7 @@ SOFTWARE. */
 
 @media(prefers-color-scheme: dark) {
   :root {
+    --color-canvas-default-background: #121212;
     --color-canvas-default-transparent: rgba(13,17,23,0);
     --color-marketing-icon-primary: #79c0ff;
     --color-marketing-icon-secondary: #1f6feb;

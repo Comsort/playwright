@@ -31,11 +31,6 @@ import './theme.css';
 import { CommentsSideBar } from './commentsSideBar';
 import { eventDispatch, generateURL, useEventListener } from './uiUtils';
 
-declare global {
-  interface Window {
-    playwrightReportBase64?: string;
-  }
-}
 
 // These are extracted to preserve the function identity between renders to avoid re-triggering effects.
 const testFilesRoutePredicate = (params: URLSearchParams) => !params.has('testId');

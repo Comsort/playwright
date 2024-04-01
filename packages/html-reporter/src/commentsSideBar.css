@@ -21,7 +21,7 @@
 .comment-pane-content-user{
   position: sticky;
   bottom: 0;
-  background: #121212;
+  background: var(--color-canvas-default-background);
   width: 100%;
   padding: .5rem;
   display: flex;

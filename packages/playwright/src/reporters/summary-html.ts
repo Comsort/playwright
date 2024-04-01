@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-import { open } from 'playwright-core/lib/utilsBundle';
-import { MultiMap, getPackageManagerExecCommand } from 'playwright-core/lib/utils';
+import { MultiMap } from 'playwright-core/lib/utils';
 import fs from 'fs';
 import path from 'path';
 import type { TransformCallback } from 'stream';
@@ -39,17 +38,9 @@ type TestEntry = {
   testCaseSummary: TestCaseSummary
 };
 
-const htmlReportOptions = ['always', 'never', 'on-failure'];
-type HtmlReportOpenOption = (typeof htmlReportOptions)[number];
-
-const isHtmlReportOption = (type: string): type is HtmlReportOpenOption => {
-  return htmlReportOptions.includes(type);
-};
-
 type SummaryHtmlReporterOptions = {
   configDir: string,
   outputFolder?: string,
-  open?: HtmlReportOpenOption,
   host?: string,
   port?: number,
   attachmentsBaseURL?: string,
@@ -63,7 +54,6 @@ class SummaryHtmlReporter extends EmptyReporter {
   private _options: SummaryHtmlReporterOptions;
   private _outputFolder!: string;
   private _attachmentsBaseURL!: string;
-  private _open: string | undefined;
   private _buildResult: { ok: boolean, singleTestId: string | undefined, htmlReport: HTMLReport } | undefined;
   private _topLevelErrors: TestError[] = [];
 
@@ -83,9 +73,8 @@ class SummaryHtmlReporter extends EmptyReporter {
   }
 
   override onBegin(suite: Suite) {
-    const { outputFolder, open, attachmentsBaseURL } = this._resolveOptions();
+    const { outputFolder, attachmentsBaseURL } = this._resolveOptions();
     this._outputFolder = outputFolder;
-    this._open = open;
     this._attachmentsBaseURL = attachmentsBaseURL;
     const reportedWarnings = new Set<string>();
     for (const project of this.config.projects) {
@@ -106,11 +95,10 @@ class SummaryHtmlReporter extends EmptyReporter {
     this.suite = suite;
   }
 
-  _resolveOptions(): { outputFolder: string, open: HtmlReportOpenOption, attachmentsBaseURL: string } {
+  _resolveOptions(): { outputFolder: string, attachmentsBaseURL: string } {
     const outputFolder = reportFolderFromEnv() ?? resolveReporterOutputPath('playwright-report', this._options.configDir, this._options.outputFolder);
     return {
       outputFolder,
-      open: getHtmlReportOptionProcessEnv() || this._options.open || 'on-failure',
       attachmentsBaseURL: this._options.attachmentsBaseURL || 'data/'
     };
   }
@@ -145,43 +133,12 @@ class SummaryHtmlReporter extends EmptyReporter {
       body: JSON.stringify({ data }),
       headers:defaultHeaders })).json())
   }
-
-  override async onExit() {
-    if (process.env.CI || !this._buildResult)
-      return;
-    const { ok, singleTestId } = this._buildResult;
-    const packageManagerCommand = getPackageManagerExecCommand();
-    const relativeReportPath = this._outputFolder === standaloneDefaultFolder() ? '' : ' ' + path.relative(process.cwd(), this._outputFolder);
-    const hostArg = this._options.host ? ` --host ${this._options.host}` : '';
-    const portArg = this._options.port ? ` --port ${this._options.port}` : '';
-    console.log(this._outputFolder);
-    console.log('To open last HTML report run:');
-    console.log(colors.cyan(`
-      ${packageManagerCommand} playwright show-report${relativeReportPath}${hostArg}${portArg}
-    `));
-  }
 }
 
 function reportFolderFromEnv(): string | undefined {
   if (process.env[`PLAYWRIGHT_HTML_REPORT`])
     return path.resolve(process.cwd(), process.env[`PLAYWRIGHT_HTML_REPORT`]);
   return undefined;
-}
-
-function getHtmlReportOptionProcessEnv(): HtmlReportOpenOption | undefined {
-  const processKey = 'PW_TEST_HTML_REPORT_OPEN';
-  const htmlOpenEnv = process.env[processKey];
-  if (!htmlOpenEnv)
-    return undefined;
-  if (!isHtmlReportOption(htmlOpenEnv)) {
-    console.log(colors.red(`Configuration Error: HTML reporter Invalid value for ${processKey}: ${htmlOpenEnv}. Valid values are: ${htmlReportOptions.join(', ')}`));
-    return undefined;
-  }
-  return htmlOpenEnv;
-}
-
-function standaloneDefaultFolder(): string {
-  return reportFolderFromEnv() ?? resolveReporterOutputPath('playwright-report', process.cwd(), undefined);
 }
 
 class HtmlBuilder {
@@ -298,16 +255,13 @@ class HtmlBuilder {
     }
 
     // Inline report data.
-    const indexFile = path.join(this._reportFolder, 'index.html');
-    fs.appendFileSync(indexFile, '<script>\nwindow.playwrightReportBase64 = "data:application/zip;base64,');
+    const indexFile = path.join(this._reportFolder, 'report.zip');
     await new Promise(f => {
       this._dataZipFile!.end(undefined, () => {
         this._dataZipFile!.outputStream
-            .pipe(new Base64Encoder())
-            .pipe(fs.createWriteStream(indexFile, { flags: 'a' })).on('close', f);
+            .pipe(fs.createWriteStream(indexFile)).on('close', f);
       });
     });
-    fs.appendFileSync(indexFile, '";</script>');
 
     let singleTestId: string | undefined;
     if (htmlReport.stats.total === 1) {

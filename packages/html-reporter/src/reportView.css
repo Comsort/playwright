@@ -20,6 +20,7 @@ html, body {
   padding: 0;
   margin: 0;
   overscroll-behavior-x: none;
+  background: var(--color-canvas-default-background);
 }
 
 body {

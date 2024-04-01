@@ -39,5 +39,6 @@
 }
 .comment-card-context-title{
   font-size: 13px;
-
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
